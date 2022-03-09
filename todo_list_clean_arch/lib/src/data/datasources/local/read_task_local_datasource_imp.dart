@@ -19,7 +19,7 @@ class ReadTaskLocalDatasourceImp implements ReadTaskDatasource {
   @override
   Future<Either<Exception, List<TaskEntity>>> call() async {
     try {
-      await Future.delayed(const Duration(seconds: 5));
+      await Future.delayed(const Duration(seconds: 1));
       var box = db.getBox('taskBox');
       final data = box.keys.map((key) {
         var taskItem = box.get(key);
@@ -30,7 +30,7 @@ class ReadTaskLocalDatasourceImp implements ReadTaskDatasource {
         };
         return TaskDto.fromMap(result);
       }).toList();
-
+    
       return Right(data);
     } catch (e) {
       return Left(Exception("Error when try to read the tasks"));

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:todo_list_clean_arch/src/domain/entities/task_entity.dart';
 import 'package:todo_list_clean_arch/src/presentation/controllers/task_controller.dart';
+import 'package:todo_list_clean_arch/src/presentation/states/task_state.dart';
+import 'package:todo_list_clean_arch/src/presentation/stores/task_store.dart';
 
 class TaskPage extends StatefulWidget {
   const TaskPage({Key? key}) : super(key: key);
@@ -13,56 +15,54 @@ class TaskPage extends StatefulWidget {
 
 class _TaskPageState extends State<TaskPage> {
   late final TaskController _controller;
+  late final store;
   final TextEditingController _controllerText = TextEditingController();
-  late Future<dynamic> _list;
+ 
+  
 
   @override
   void initState() {
     super.initState();
     _controller = GetIt.I.get<TaskController>();
-    _list = _controller.readTasks();
+    store = GetIt.I.get<TaskStore>();
+    store.getTasks();
+  
   }
 
   @override
   Widget build(BuildContext context) {
-    Widget buildContainer() {
-      return FutureBuilder<dynamic>(
-          future: _list,
-          //initialData: ,
-          builder: (_, snapshot) {
-            switch (snapshot.connectionState) {
-              case ConnectionState.waiting:
-                return const Center(child: CircularProgressIndicator());
-              default:
-                if (snapshot.hasError) {
-                  print("Error ${snapshot.error}");
-                  return const Center(child: Text("Somer error occured"));
-                } else {
-                  final tasks = snapshot.data;
-                  print("Snapshot ${snapshot.data}");
-                  return tasks?.isEmpty
-                      ? const Center(
-                          child: Text("Você ainda não salvou nenhuma tarefa"))
-                      : ListView.builder(
-                          itemCount: tasks?.length,
-                          itemBuilder: (_, index) {
-                            final task = tasks?[index];
-                            return ListTile(
-                                title: Text(
-                                  task!.task,
-                                  style: TextStyle(
-                                      decoration: task.statusTask
-                                          ? TextDecoration.lineThrough
-                                          : TextDecoration.none),
-                                ),
-                                onTap: () {
-                                  setState(() {
-                                    task.statusTask = !task.statusTask;
-                                  });
-                                });
-                          });
-                }
+    
+
+    Widget buildValueNotifier() {
+      return ValueListenableBuilder(
+          valueListenable: store,
+          builder: (_, state, child) {
+            if (state is LoadingTaskState) {
+              print("Loading....");
+              return const Center(child: CircularProgressIndicator());
             }
+
+            if (state is ErrorTaskState) {
+              print("Error....");
+              return const Center(child: Text("Erro ao carregar tarefas"));
+            }
+
+            if (state is SuccessTaskState) {
+              print("Success....");
+              return store.taskList?.isEmpty
+                  ? const Center(
+                      child: Text("Você ainda não salvou nenhuma tarefa"))
+                  : ListView.builder(
+                      itemCount: store.taskList.length,
+                      itemBuilder: (_, index) {
+                        final task = store.taskList[index];
+                        return ListTile(
+                          title: Text(task.task),
+                        );
+                      });
+            }
+            print("Nothing....");
+            return Container();
           });
     }
 
@@ -79,8 +79,15 @@ class _TaskPageState extends State<TaskPage> {
                 TaskEntity task =
                     TaskEntity(task: _controllerText.text, statusTask: false);
                 var result = await _controller.saveTask(task);
-                debugPrint("Resultado do salvamento $result");
-                Navigator.pop(context, 'Salvar');
+                if (result) {
+                  debugPrint("Resultado do salvamento $result");
+                  _controllerText.text = "";
+                  Navigator.pop(context, 'Salvar');
+               
+                  store.getTasks();
+                } else {
+                  debugPrint("Deu ruim $result");
+                }
               },
               child: const Text("Salvar"))
         ],
@@ -89,7 +96,7 @@ class _TaskPageState extends State<TaskPage> {
 
     return Scaffold(
         appBar: AppBar(title: const Text("To Do List")),
-        body: buildContainer(),
+        body: buildValueNotifier(),
         floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
         floatingActionButton: FloatingActionButton(
           child: const Icon(Icons.add),

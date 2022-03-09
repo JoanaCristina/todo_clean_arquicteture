@@ -16,7 +16,6 @@ void main() {
   });
 
   testWidgets('Should return a TaskDto object', (tester) async {
-    var taskDto1 = TaskDto(newTask: 'Terminar a leitura do Clean Arch', newStatusTask: true, newId: 1);
     var result =  TaskDto.fromMap(json);
     expect(result, isNotNull);
   });

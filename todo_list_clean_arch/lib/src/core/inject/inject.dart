@@ -25,20 +25,20 @@ import 'package:todo_list_clean_arch/src/domain/usecases/read_task_usecase/read_
 import 'package:todo_list_clean_arch/src/domain/usecases/save_task_usecase/save_task_usecase.dart';
 import 'package:todo_list_clean_arch/src/domain/usecases/save_task_usecase/save_task_usecase_imp.dart';
 import 'package:todo_list_clean_arch/src/presentation/controllers/task_controller.dart';
+import 'package:todo_list_clean_arch/src/presentation/stores/task_store.dart';
 
 class Inject {
   //CONTAINER DE INJEÇÃO DE DEPENDÊNCIA
   static void init() {
     GetIt getIt = GetIt.instance;
 
-      
     //Começamos a registrar do mais interno para fora
     //datasources. Tipa-se utilizando a Interface
     //******************DATASOURCES************************
     getIt.registerLazySingleton<SaveTaskDatasource>(
         () => SaveTaskLocalDatasourceImp(db: HiveDb()));
     getIt.registerLazySingleton<ReadTaskDatasource>(
-        () => ReadTaskLocalDatasourceImp(db:HiveDb()));
+        () => ReadTaskLocalDatasourceImp(db: HiveDb()));
     getIt.registerLazySingleton<EditTaskDatasource>(
         () => EditTaskLocalDatasourceImp());
     getIt.registerLazySingleton<DeleteTaskDatasource>(
@@ -66,6 +66,7 @@ class Inject {
     //***************CONTROLLERS******************************
     //TIPO FACTORY:Toda vez que a classe for recuperada será criado uma nova instância
     getIt.registerFactory<TaskController>(
-        () => TaskController(getIt(), getIt(), getIt(), getIt()));
+        () => TaskController(getIt(), getIt(), getIt()));
+    getIt.registerFactory<TaskStore>(() => TaskStore(readTaskUsecase: getIt()));
   }
 }

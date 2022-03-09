@@ -15,7 +15,7 @@ class SaveTaskLocalDatasourceImp implements SaveTaskDatasource {
         "task": taskEntity.task,
         "statusTask": taskEntity.statusTask,
       };
-      print("Item salvo $taskItem");
+    
       box.add(taskItem);
 
       return const Right(true);
